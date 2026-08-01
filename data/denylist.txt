@@ -1,0 +1,316 @@
+# Repos excluded from the Bubblesort dataset.
+#
+# The top of GitHub by stars is dominated by things that are not software:
+# awesome-lists, interview prep, roadmaps, book collections, tutorial series.
+# They carry 100k+ stars each, which makes them completely unguessable — and one
+# of them in a puzzle turns the whole board into noise.
+#
+# The test for inclusion: is this a codebase a developer could reason about?
+# "Could an informed person think their way to where this ranks?" If the answer
+# is no, it belongs here.
+#
+# Syntax: one pattern per line, matched case-insensitively against the full
+# "owner/name" slug. `*` matches any run of characters. `#` starts a comment.
+# Re-running build-dataset.ts prints everything this file cut, plus the repos it
+# kept that look suspicious, so this list can be tightened over time.
+
+# --- category patterns -------------------------------------------------------
+
+*awesome*
+*interview*
+*leetcode*
+*roadmap*
+*cheatsheet*
+*cheat-sheet*
+*tutorial*
+*bootcamp*
+*curriculum*
+*free-programming*
+*programming-books*
+*/books
+*/book
+*-books
+*coding-challenge*
+*codingchallenge*
+*algorithm*
+*-projects
+*projects-with-*
+*clone-wars*
+*/clones
+*hello-*
+*iptv*
+*open-source-*apps*
+*ailearning*
+*ai-learning*
+*course*
+*-patterns
+*/patterns
+*/data
+*dataset*
+*/apps
+*-apps
+*/study*
+*learn-*
+*-learning-path*
+*/guide
+*-guide
+*guides/*
+*/handbook
+*-handbook
+*100-days*
+*30-days*
+*30-seconds*
+*/notes
+*-notes
+*/cs-notes
+*best-practices*
+*style-guide*
+*styleguide*
+*/resources
+*-resources
+*/examples
+*-examples
+*/demo
+*/tips
+*/wiki
+*/faq
+*/list
+*-list
+*/lists
+*/collection
+*/inspiration
+*/every-programmer*
+*project-based-learning*
+*build-your-own*
+*system-design*
+*design-patterns*
+*/papers
+*-papers
+*/specification
+*/spec
+
+# --- asset collections -------------------------------------------------------
+# Icon sets, emoji, wallpapers, fonts. Their stats track how many *files* got
+# added, not how the project is built, so no amount of knowing the project helps
+# you rank it.
+
+*icons*
+*-icon-*
+*emoji*
+*wallpaper*
+*/fonts
+*-fonts
+*/svg-*
+*flags*
+
+# --- scaffolds and templates -------------------------------------------------
+# A boilerplate's commit count measures how often the template churned, which is
+# not something anyone has intuition about.
+
+*boilerplate*
+*template*
+*starter*
+*scaffold*
+*dotfiles*
+*/samples
+*-samples
+*-sample
+*portfolio*
+*resume*
+*/config
+*-config
+
+# --- translation and localisation --------------------------------------------
+# Translations of other projects' docs. The stats measure translation volume.
+
+*chinese*
+*-zh*
+*_zh*
+*zh-cn*
+*zh_cn*
+*-cn
+*translat*
+*i18n-*
+
+# --- star farms --------------------------------------------------------------
+# The 2025-26 cohort: prompt dumps, "skills" lists, agent registries, leaked
+# system prompts. These spike to 40-190k stars in months and are documents, not
+# codebases, so nobody can reason about where they rank on any engineering stat.
+#
+# There is no structural signal that separates them. Hmbown/CodeWhale carries
+# 195 contributors and 6,225 commits, statistically indistinguishable from
+# charmbracelet/bubbletea at 155 and 1,869 -- while anthropics/claude-code, which
+# is obviously real, has only 54 contributors and 713 commits. Contributor
+# counts, commit counts and stars-per-commit all misfire in both directions.
+# What actually separates them is recognition, which no API exposes, so this
+# stays a hand-maintained list. The note called it: filter by hand.
+
+# Plural on purpose. "*prompt*" also swallows linshenkx/prompt-optimizer, which
+# is a real application; "*prompts*" reaches the dumps and collections without it.
+*prompts*
+# Bare suffix too: "marketingskills" runs the words together and slips a
+# separator-anchored pattern.
+*skills
+*-skill
+*/agents
+*workflows*
+# Hyphen/underscore anchored, because a bare "*leaks*" eats gitleaks/gitleaks —
+# a genuine secret scanner.
+*-leaks
+*_leaks
+*best-practice*
+*from-scratch
+*first-contributions*
+*realworld*
+*/nocode
+
+# --- beginner courses --------------------------------------------------------
+# Narrow on purpose. A broad "*book*" or "*docs*" pattern also eats storybook,
+# docusaurus and devdocs, which are real software.
+
+*-for-beginners
+*_for_beginners
+*textbook*
+
+# --- named cuts --------------------------------------------------------------
+# Books, wordlists, link collections and tutorials that survived the category
+# patterns. Each one is listed individually because the obvious generalisation
+# would take a real project with it.
+
+trimstray/the-book-of-secret-knowledge
+ruanyf/weekly
+ngosang/trackerslist
+jakevdp/PythonDataScienceHandbook
+kelseyhightower/kubernetes-the-hard-way
+GokuMohandas/Made-With-ML
+minimaxir/big-list-of-naughty-strings
+GitHubDaily/GitHubDaily
+dypsilon/frontend-dev-bookmarks
+astaxie/build-web-application-with-golang
+kilimchoi/engineering-blogs
+bannedbook/fanqiang
+danielmiessler/SecLists
+openai/openai-cookbook
+anthropics/claude-cookbooks
+inkonchain/docs
+hugohe3/ppt-master
+
+# Individually named star farms the patterns above do not reach.
+# HelloGitHub is the instructive one: "*hello-*" needs a hyphen, and camelCase
+# has none, so a 168k-star monthly link digest sailed straight through.
+521xueweihan/HelloGitHub
+521xueweihan/GitHub520
+geekcomputers/Python
+isocpp/CppCoreGuidelines
+
+# University course dumps. Enormous star counts, zero engineering signal, and no
+# pattern reaches them — the names are institution acronyms and inside jokes.
+lib-pku/libpku
+QSCTech/zju-icicles
+PKUFlyingPig/cs-self-learning
+PKUanonym/REKCARC-TSC-UHT
+scutan90/DeepLearning-500-questions
+
+# Config collections. "*/oh-my-*" would be the pattern, but ohmyzsh/ohmyzsh runs
+# the words together and is real software, so this stays explicit.
+Yeachan-Heo/oh-my-claudecode
+bradtraversy/design-resources-for-developers
+msitarzewski/agency-agents
+code-yeongyu/oh-my-openagent
+fighting41love/funNLP
+formulahendry/955.WLB
+Hmbown/CodeWhale
+colbymchenry/codegraph
+Crosstalk-Solutions/project-nomad
+multica-ai/multica
+nexu-io/open-design
+heygen-com/hyperframes
+jamiepine/voicebox
+Egonex-AI/Understand-Anything
+VectifyAI/PageIndex
+Fission-AI/OpenSpec
+zhaoolee/ChromeAppHeroes
+GorvGoyl/Clone-Wars
+lfnovo/open-notebook
+diegosouzapw/OmniRoute
+ItzCrazyKns/Vane
+Panniantong/Agent-Reach
+thedotmack/claude-mem
+
+# Individually huge, individually unguessable. Listed explicitly so the category
+# patterns above can stay narrow enough not to catch real projects.
+
+freeCodeCamp/freeCodeCamp
+EbookFoundation/free-programming-books
+sindresorhus/awesome
+public-apis/public-apis
+codecrafters-io/build-your-own-x
+jwasham/coding-interview-university
+kamranahmedse/developer-roadmap
+donnemartin/system-design-primer
+996icu/996.ICU
+trekhleb/javascript-algorithms
+TheAlgorithms/Python
+TheAlgorithms/Java
+TheAlgorithms/JavaScript
+TheAlgorithms/C-Plus-Plus
+getify/You-Dont-Know-JS
+ossu/computer-science
+practical-tutorials/project-based-learning
+labuladong/fucking-algorithm
+CyC2018/CS-Notes
+Snailclimb/JavaGuide
+doocs/advanced-java
+yangshun/tech-interview-handbook
+airbnb/javascript
+github/gitignore
+jlevy/the-art-of-command-line
+justjavac/free-programming-books-zh_CN
+ryanmcdermott/clean-code-javascript
+kdn251/interviews
+MisterBooo/LeetCodeAnimation
+azl397985856/leetcode
+gto76/python-cheatsheet
+Hack-with-Github/Awesome-Hacking
+sdmg15/Best-websites-a-programmer-should-visit
+florinpop17/app-ideas
+ripienaar/free-for-dev
+danistefanovic/build-your-own-x
+vinta/awesome-python
+avelino/awesome-go
+sorrycc/awesome-javascript
+enaqx/awesome-react
+akullpp/awesome-java
+rust-unofficial/awesome-rust
+josephmisiti/awesome-machine-learning
+vsouza/awesome-ios
+JStumpp/awesome-android
+prakhar1989/awesome-courses
+tiimgreen/github-cheat-sheet
+open-source-society/computer-science
+Kristories/awesome-guidelines
+goldbergyoni/nodebestpractices
+thedaviddias/Front-End-Checklist
+denysdovhan/wtfjs
+leonardomso/33-js-concepts
+Asabeneh/30-Days-Of-Python
+practicalAI/practicalAI
+microsoft/Web-Dev-For-Beginners
+microsoft/ML-For-Beginners
+ByteByteGoHq/system-design-101
+donnemartin/interactive-coding-challenges
+lydiahallie/javascript-questions
+sudheerj/javascript-interview-questions
+h5bp/Front-end-Developer-Interview-Questions
+yangshun/front-end-interview-handbook
+Developer-Y/cs-video-courses
+papers-we-love/papers-we-love
+mtdvio/every-programmer-should-know
+charlax/professional-programming
+bregman-arie/devops-exercises
+dair-ai/Prompt-Engineering-Guide
+f/awesome-chatgpt-prompts
+codecrafters-io/build-your-own-x
+n0shake/Public-APIs
+tldr-pages/tldr
+you-dont-need/You-Dont-Need-JavaScript

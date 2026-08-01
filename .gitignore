@@ -1,0 +1,18 @@
+node_modules/
+.lakebed/
+.env.lakebed.server
+.env.calendar.local
+
+# Raw GitHub API cache. Regenerable from tools/fetch-repos.ts, and large.
+data/raw/
+
+# Canonical puzzle material. These files contain the private repo snapshot,
+# future answer order, and a human-readable answer key. They are required for a
+# real build, but must never enter public Git history.
+server/data/repos.gen.ts
+server/data/calendar.gen.ts
+data/calendar-audit.txt
+
+# Generated comparison pages can embed real current or future boards. Keep the
+# generators; keep their rendered output local.
+design/*.html

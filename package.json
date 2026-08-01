@@ -1,0 +1,21 @@
+{
+  "name": "bubblesort",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A daily browser game: order five GitHub repos by a stat.",
+  "scripts": {
+    "fetch": "node tools/fetch-repos.ts",
+    "dataset": "node tools/build-dataset.ts",
+    "calendar": "node --env-file=.env.calendar.local tools/build-calendar.ts",
+    "sim": "node tools/sim.ts",
+    "verify": "node tools/verify.ts",
+    "dev": "lakebed dev --port 3000"
+  },
+  "devDependencies": {
+    "lakebed": "0.0.29"
+  },
+  "engines": {
+    "node": ">=23.6"
+  }
+}
