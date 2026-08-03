@@ -14,7 +14,7 @@ puzzle or run out of guesses.
 
 ## How to play
 
-1. Select two repositories to swap them.
+1. Drag one repository onto another to swap them, or select two repositories.
 2. Submit the order you think is correct.
 3. Keep the positions that lock and rearrange the rest.
 

@@ -200,12 +200,26 @@ interface BoardProps {
   locked: Map<number, number>;
   armed: number | null;
   onPick: (slot: number) => void;
+  onSwap: (from: number, to: number) => void;
   disabled: boolean;
 }
 
-function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
+interface DragState {
+  pointerId: number;
+  source: number;
+  target: number | null;
+  startY: number;
+  deltaY: number;
+  active: boolean;
+}
+
+function Board({ items, order, locked, armed, onPick, onSwap, disabled }: BoardProps) {
+  const board = useRef<HTMLDivElement>(null);
   const nodes = useRef(new Map<number, HTMLButtonElement>());
   const prevRects = useRef(new Map<number, DOMRect>());
+  const dropOffsets = useRef(new Map<number, number>());
+  const ignoreClick = useRef(false);
+  const [drag, setDrag] = useState<DragState | null>(null);
 
   /**
    * FLIP. Measure where every row was, let the reorder render, then animate each
@@ -221,19 +235,22 @@ function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
     for (const [item, el] of nodes.current) {
       const now = el.getBoundingClientRect();
       const was = prevRects.current.get(item);
+      const dropOffset = dropOffsets.current.get(item) ?? 0;
       prevRects.current.set(item, now);
+      dropOffsets.current.delete(item);
       if (!was || reduce) continue;
 
       const dy = was.top - now.top;
-      if (Math.abs(dy) < 1) continue;
+      const startY = dy + dropOffset;
+      if (Math.abs(startY) < 1) continue;
 
       // Bow outward, in opposite directions for the two travelling rows, so
       // their paths never overlap.
       const bow = dy > 0 ? 14 : -14;
       el.animate(
         [
-          { transform: `translate(0px, ${dy}px)` },
-          { transform: `translate(${bow}px, ${dy * 0.5}px)` },
+          { transform: `translate(0px, ${startY}px)` },
+          { transform: `translate(${bow}px, ${startY * 0.5}px)` },
           { transform: "translate(0px, 0px)" }
         ],
         { duration: SWAP_MS, easing: "cubic-bezier(.4, 0, .2, 1)" }
@@ -242,7 +259,7 @@ function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
   }, [order]);
 
   return (
-    <div role="list" style={{ position: "relative" }}>
+    <div ref={board} role="list" style={{ position: "relative" }}>
       {/*
         The spine, drawn once for the whole board rather than per row.
         Bordering each row individually leaves a gap wherever a row's content is
@@ -256,6 +273,9 @@ function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
       {order.map((item, slot) => {
         const isLocked = locked.get(slot) === item;
         const isArmed = armed === slot;
+        const isDragged = drag?.active && drag.source === slot;
+        const isDropTarget =
+          drag?.active && drag.target === slot && drag.source !== slot && !isLocked;
         return (
           <button
             key={item}
@@ -268,7 +288,61 @@ function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
             disabled={disabled || isLocked}
             aria-label={`Slot ${slot + 1}, ${items[item].slug}${isLocked ? ", locked" : ""}`}
             aria-pressed={isArmed}
-            onClick={() => onPick(slot)}
+            onClick={() => {
+              if (ignoreClick.current) return;
+              onPick(slot);
+            }}
+            onPointerDown={(event) => {
+              if (disabled || isLocked || event.button !== 0) return;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              setDrag({
+                pointerId: event.pointerId,
+                source: slot,
+                target: slot,
+                startY: event.clientY,
+                deltaY: 0,
+                active: false
+              });
+            }}
+            onPointerMove={(event) => {
+              if (!drag || drag.pointerId !== event.pointerId) return;
+              const deltaY = event.clientY - drag.startY;
+              const active = drag.active || Math.abs(deltaY) >= 6;
+              let target: number | null = drag.source;
+              if (active) {
+                const rect = board.current?.getBoundingClientRect();
+                target = rect && event.clientY >= rect.top && event.clientY < rect.bottom
+                  ? Math.floor((event.clientY - rect.top) / ROW_H)
+                  : null;
+              }
+              setDrag({ ...drag, deltaY, active, target });
+            }}
+            onPointerUp={(event) => {
+              if (!drag || drag.pointerId !== event.pointerId) return;
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              if (drag.active) {
+                // A pointer drag still emits a click after pointerup. Consume
+                // only that compatibility click so it cannot arm the moved row.
+                ignoreClick.current = true;
+                setTimeout(() => {
+                  ignoreClick.current = false;
+                }, 0);
+                if (drag.target !== null && drag.target !== drag.source) {
+                  const targetItem = order[drag.target];
+                  if (locked.get(drag.target) !== targetItem) {
+                    // Preserve the dragged row's on-screen drop point through
+                    // the reorder. Its partner still takes the existing curved
+                    // FLIP path into the vacated slot.
+                    dropOffsets.current.set(item, drag.deltaY);
+                    onSwap(drag.source, drag.target);
+                  }
+                }
+              }
+              setDrag(null);
+            }}
+            onPointerCancel={() => setDrag(null)}
             style={{
               position: "relative",
               display: "flex",
@@ -280,7 +354,11 @@ function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
               border: "none",
               font: "inherit",
               padding: 0,
-              cursor: disabled || isLocked ? "default" : "pointer"
+              cursor: disabled || isLocked ? "default" : isDragged ? "grabbing" : "grab",
+              touchAction: disabled || isLocked ? "auto" : "none",
+              userSelect: "none",
+              zIndex: isDragged ? 1 : undefined,
+              transform: isDragged ? `translateY(${drag.deltaY}px)` : undefined
             }}
           >
             {isLocked ? (
@@ -321,7 +399,7 @@ function Board({ items, order, locked, armed, onPick, disabled }: BoardProps) {
                 display: "flex",
                 alignItems: "baseline",
                 gap: "14px",
-                paddingLeft: isArmed ? "34px" : "18px",
+                paddingLeft: isArmed || isDropTarget ? "34px" : "18px",
                 transition: "padding-left 140ms ease"
               }}
             >
@@ -783,6 +861,20 @@ function Game({ requestedDay }: { requestedDay?: number }) {
     setStreak(recordResult(mode, today.day, Boolean(session?.solved)));
   }, [ready, finished, mode, isArchive]);
 
+  const swap = useCallback(
+    (from: number, to: number) => {
+      if (finished || busy || from === to) return;
+      setOrder((prev) => {
+        if (locked.get(from) === prev[from] || locked.get(to) === prev[to]) return prev;
+        const next = prev.slice();
+        [next[from], next[to]] = [next[to], next[from]];
+        return next;
+      });
+      setArmed(null);
+    },
+    [finished, busy, locked]
+  );
+
   const pick = useCallback(
     (slot: number) => {
       if (finished || busy) return;
@@ -795,14 +887,9 @@ function Game({ requestedDay }: { requestedDay?: number }) {
         setArmed(null);
         return;
       }
-      setOrder((prev) => {
-        const next = prev.slice();
-        [next[armed], next[slot]] = [next[slot], next[armed]];
-        return next;
-      });
-      setArmed(null);
+      swap(armed, slot);
     },
-    [armed, finished, busy, locked, order]
+    [armed, finished, busy, locked, order, swap]
   );
 
   const onSubmit = useCallback(async () => {
@@ -921,6 +1008,7 @@ function Game({ requestedDay }: { requestedDay?: number }) {
             locked={locked}
             armed={armed}
             onPick={pick}
+            onSwap={swap}
             disabled={busy}
           />
 
