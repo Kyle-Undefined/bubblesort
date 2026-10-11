@@ -74,6 +74,25 @@ in a deployment from the production checkout. A fresh clone cannot deploy the
 canonical game unless its private puzzle material and seeds are supplied
 separately.
 
+### Updating a deployed game
+
+The hosted Lakebed runtime can change independently of the client bundle. Keep
+the pinned Lakebed SDK current and redeploy after an upgrade. The client starts
+a protected guest session before loading puzzles; players do not need to sign in.
+
+Run these commands from the production checkout, which contains the canonical
+puzzle data, after pulling the update:
+
+```sh
+npm ci
+npm run verify
+npx lakebed deploy
+```
+
+Reuse the existing `lakebed.json` binding and Lakebed deployment credentials.
+Do not deploy a fresh public clone or replace the canonical calendar to fix a
+client connection problem.
+
 ### Commands
 
 | Command | Purpose |
