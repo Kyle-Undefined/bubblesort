@@ -1,5 +1,7 @@
 node_modules/
 .lakebed/
+test-results/
+playwright-report/
 .env.lakebed.server
 .env.calendar.local
 

@@ -10,10 +10,18 @@
     "calendar": "node --env-file=.env.calendar.local tools/build-calendar.ts",
     "sim": "node tools/sim.ts",
     "verify": "node tools/verify.ts",
+    "verify:fixture": "node tools/verify-fixture.ts",
+    "verify:build": "node tools/verify-build.ts",
+    "verify:client": "playwright test",
+    "verify:public": "npm run verify:fixture && npm run verify:build && npm run verify:client",
+    "check:deploy": "node tools/check-deploy.ts",
+    "deploy": "npm run check:deploy && lakebed deploy",
     "dev": "lakebed dev --port 3000"
   },
   "devDependencies": {
-    "lakebed": "0.0.29"
+    "@playwright/test": "1.64.1",
+    "esbuild": "0.28.2",
+    "lakebed": "0.0.40"
   },
   "engines": {
     "node": ">=23.6"

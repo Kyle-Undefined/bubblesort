@@ -44,16 +44,25 @@ bubblesort.lakebed.app
 
 ## Development
 
-Bubblesort runs on [Lakebed](https://lakebed.app) and requires Node.js 23.6 or
-newer.
+Bubblesort runs on [Lakebed](https://lakebed.dev) and requires Node.js 23.6 or
+newer. Node.js 24 is the tested and recommended version for this checkout.
+
+To check a public clone without the private puzzle files:
 
 ```sh
-npm install
-npm run verify
-npm run dev
+npm ci
+npx playwright install chromium --only-shell
+npm run verify:public
 ```
 
-The development server starts once local puzzle data is available.
+These checks run the real server suite against synthetic puzzle data for all
+five stat types, build a production artifact in an isolated temporary checkout,
+and test the real client/SDK in Chromium against a fixture server. They do not
+contact the live game or require GitHub Actions, Lakebed credentials, or private
+calendar files. Test data is never written into the production checkout.
+
+`npm run verify` validates the actual calendar once private puzzle data is
+available. `npm run dev` starts the local game with that data.
 
 ### Puzzle data
 
@@ -74,6 +83,40 @@ in a deployment from the production checkout. A fresh clone cannot deploy the
 canonical game unless its private puzzle material and seeds are supplied
 separately.
 
+### Updating a deployed game
+
+This revision pins Lakebed **0.0.40**, checked on October 20, 2026. It supports
+both the guest session supplied in the initial HTML and the session-request
+fallback. The client waits for a valid session before loading puzzles; players
+do not need to sign in.
+
+The hosted runtime can change independently of the client bundle. When ready
+to redeploy, check `npm view lakebed version` again. If a newer stable SDK has
+shipped, review its changes and rerun the local checks before updating the pin.
+Keep the committed lockfile for the version being tested.
+
+Run these commands from the production checkout, which contains the canonical
+puzzle data, after pulling the update:
+
+```sh
+npm ci
+npm run deploy
+```
+
+`npm run deploy` first checks that the private files and existing deployment
+binding are present, runs the real calendar verification, and builds the claimed
+production artifact with Lakebed's deployment source checks. Only then does it
+run `lakebed deploy`. Use `npm run check:deploy` to run the local preflight alone.
+
+Reuse the existing `lakebed.json` binding, Lakebed credentials, and canonical
+calendar. The session key, streak keys, and `sessions`/`results` schemas are
+unchanged, so this update does not require a player-data migration or table
+deletion. Do not replace the calendar to fix a client connection problem.
+
+After deploying, open the game in the same browser that has your saved progress,
+check the archive, submit a guess, and reload to confirm the guess remains. Also
+check a private window to confirm a new guest can load the game.
+
 ### Commands
 
 | Command | Purpose |
@@ -83,4 +126,10 @@ separately.
 | `npm run calendar` | Generate a private puzzle calendar |
 | `npm run sim` | Simulate puzzle-solving difficulty |
 | `npm run verify` | Run the game and secrecy verification suite |
+| `npm run verify:fixture` | Run server assertions for all stats with synthetic data |
+| `npm run verify:build` | Build and validate a production artifact with synthetic data |
+| `npm run verify:client` | Run Chromium startup, persistence, and recovery checks |
+| `npm run verify:public` | Run all public-clone checks locally |
+| `npm run check:deploy` | Verify the canonical calendar and build without deploying |
+| `npm run deploy` | Run the production preflight, then update the bound deployment |
 | `npm run dev` | Start the local Lakebed app |
