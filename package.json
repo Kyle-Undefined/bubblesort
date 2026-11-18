@@ -19,9 +19,9 @@
     "dev": "lakebed dev --port 3000"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.1",
+    "@playwright/test": "1.65.1",
     "esbuild": "0.28.2",
-    "lakebed": "0.0.40"
+    "lakebed": "0.0.41"
   },
   "engines": {
     "node": ">=23.6"

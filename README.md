@@ -85,10 +85,11 @@ separately.
 
 ### Updating a deployed game
 
-This revision pins Lakebed **0.0.40**, checked on October 20, 2026. It supports
+This revision pins Lakebed **0.0.41**, checked on November 18, 2026. It supports
 both the guest session supplied in the initial HTML and the session-request
 fallback. The client waits for a valid session before loading puzzles; players
-do not need to sign in.
+do not need to sign in. Temporary session failures retry automatically, including
+when the browser comes back online. The Retry button remains available.
 
 The hosted runtime can change independently of the client bundle. When ready
 to redeploy, check `npm view lakebed version` again. If a newer stable SDK has

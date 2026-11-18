@@ -35,11 +35,13 @@ async function setup(page: Page, options: {
   sessionGate?: Promise<void>;
   queryGate?: Promise<void>;
   sessionError?: boolean;
+  sessionNetworkError?: boolean;
   queryError?: boolean;
 } = {}) {
   const state = {
     sessionCalls: 0, queryCalls: 0, queryBeforeSession: false,
     sessionReady: !!options.initialSession, sessionError: !!options.sessionError,
+    sessionNetworkError: !!options.sessionNetworkError,
     queryError: !!options.queryError, submissions: [] as any[],
     sessions: {} as Record<string, any>, clientKeys: [] as string[], errors: [] as string[]
   };
@@ -68,6 +70,7 @@ async function setup(page: Page, options: {
     if (path === "/__lakebed/auth/session") {
       state.sessionCalls++;
       await options.sessionGate;
+      if (state.sessionNetworkError) return route.abort("internetdisconnected");
       if (state.sessionError) return route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"Test session unavailable"}' });
       state.sessionReady = true;
       return route.fulfill({ contentType: "application/json", body: JSON.stringify({ auth, requireSignIn: false }) });
@@ -130,7 +133,7 @@ test("session-request fallback waits before queries and shows progress", async (
   expect(state.errors).toEqual([]);
 });
 
-test("0.0.40 HTML-provided guest session avoids an extra session request", async ({ page }) => {
+test("HTML-provided guest session avoids an extra session request", async ({ page }) => {
   const state = await setup(page, { initialSession: true });
   await page.goto(origin);
   await expect(rows(page)).toHaveCount(5);
@@ -192,6 +195,31 @@ test("session failure exposes Retry and recovers", async ({ page }) => {
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(submit(page)).toBeVisible();
   expect(state.sessionCalls).toBe(2);
+  expect(state.errors).toEqual([]);
+});
+
+test("temporary session failure recovers automatically without clicking Retry", async ({ page }) => {
+  const state = await setup(page, { sessionError: true });
+  await page.goto(origin);
+  await expect(page.getByRole("alert")).toContainText("Could not load your session");
+  expect(state.queryCalls).toBe(0);
+  state.sessionError = false;
+  await expect(rows(page)).toHaveCount(5);
+  expect(state.sessionCalls).toBeGreaterThanOrEqual(2);
+  expect(state.queryBeforeSession).toBe(false);
+  expect(state.errors).toEqual([]);
+});
+
+test("an online event recovers a failed session request without clicking Retry", async ({ page }) => {
+  const state = await setup(page, { sessionNetworkError: true });
+  await page.goto(origin);
+  await expect(page.getByRole("alert")).toContainText("Could not reach this app");
+  expect(state.queryCalls).toBe(0);
+  state.sessionNetworkError = false;
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(rows(page)).toHaveCount(5);
+  expect(state.sessionCalls).toBeGreaterThanOrEqual(2);
+  expect(state.queryBeforeSession).toBe(false);
   expect(state.errors).toEqual([]);
 });
 
