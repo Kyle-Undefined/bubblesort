@@ -138,9 +138,9 @@ export default capsule({
      * and keeps in localStorage — there are no accounts, so this is the only
      * notion of identity, and it is deliberately trivial to reset.
      *
-     * Every numeric column is a zero-padded string: lakebed's schema has no
-     * number type, so anything that must sort correctly through an index has to
-     * be encoded. See shared/format.ts.
+     * Day keys retain the fixed-width string encoding used by existing
+     * deployments so indexed ordering and saved sessions stay compatible.
+     * See shared/format.ts.
      */
     sessions: table({
       clientKey: string(),
@@ -158,9 +158,8 @@ export default capsule({
      * Append-only, one row per finished game, for the global distribution on
      * the results screen.
      *
-     * Deliberately not a mutated counter row: mutation transactionality is
-     * undocumented in this lakebed alpha, and a read-modify-write tally would
-     * silently lose counts under concurrency. Tallying happens at read time.
+     * Keep the existing per-finished-game records and calculate the
+     * distribution at read time, without migrating to shared counter rows.
      */
     results: table({
       day: string(),

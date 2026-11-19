@@ -98,11 +98,11 @@ export function parseMonthSlug(slug: string): YearMonth | null {
 // ---------------------------------------------------------------- db encoding
 
 /**
- * The lakebed schema has no number type — `lakebed/server` exports exactly
- * string(), boolean(), id() and table(). Any number that needs to sort or range
- * correctly through `withIndex` therefore has to be a zero-padded string.
+ * The deployed schema stores day numbers as zero-padded strings so they sort
+ * correctly through `withIndex`. Modern Lakebed supports numeric fields, but
+ * keeping this encoding preserves compatibility with existing stored rows.
  *
- * Every numeric column goes through these two helpers rather than an ad-hoc
+ * Every day key goes through these two helpers rather than an ad-hoc
  * String(n) at the call site, so the padding width can never drift between
  * writer and reader.
  */

@@ -199,7 +199,9 @@ console.log("\nanswer secrecy");
   check("reveal arrives on the call that ends the game", Array.isArray(last.reveal) && last.reveal.length === SLOTS);
   check(
     "reveal is sorted best-first",
-    last.reveal.every((r: any, i: number, a: any[]) => i === 0 || a[i - 1].value >= r.value)
+    last.reveal.every((r: any, i: number, a: any[]) =>
+      i === 0 || (CALENDAR[day].stat === "age" ? a[i - 1].value <= r.value : a[i - 1].value >= r.value)
+    )
   );
 }
 

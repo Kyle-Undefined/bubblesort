@@ -1,4 +1,4 @@
-import { Link, Route, Router, Routes, useMutation, useParams, useQuery } from "lakebed/client";
+import { canAccessApp, ErrorBoundary, Link, retryAuth, Route, Router, Routes, useAuth, useMutation, useParams, useQuery } from "lakebed/client";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { calendarDate, msUntilNextDay, statLabel } from "../shared/format.ts";
 import { SLOTS } from "../shared/puzzle.ts";
@@ -458,8 +458,7 @@ function Distribution({
   const raw = useQuery<unknown>("results", { day, mode });
   const [expanded, setExpanded] = useState(false);
 
-  // lakebed's legacy hook returns [] while loading. An empty array is truthy,
-  // so check the shape rather than treating truthiness as readiness.
+  // Only render the distribution after a complete response arrives.
   if (!isDistributionData(raw) || raw.total < 1) return null;
 
   const keys = [...Array.from({ length: mode === "easy" ? 5 : 3 }, (_, i) => String(i + 1)), "X"];
@@ -936,13 +935,13 @@ function Game({ requestedDay }: { requestedDay?: number }) {
   const shell = (children: preact.ComponentChildren) => <Shell>{children}</Shell>;
 
   if (!today) {
-    // Skeleton holds the board's exact height so nothing jumps on first paint.
-    return shell(<div style={{ height: `${ROW_H * SLOTS + 160}px` }} />);
+    // Keep the board's height while making connection progress visible.
+    return shell(<div role="status" style={{ minHeight: `${ROW_H * SLOTS + 160}px` }}>Loading puzzle...</div>);
   }
   if (!ready) {
     return shell(
       <p style={{ color: GREY }}>
-        No puzzle for today. The calendar may need regenerating — see tools/build-calendar.ts.
+        No puzzle is available for this date.
       </p>
     );
   }
@@ -1107,11 +1106,7 @@ function Archive() {
   const { month } = useParams<{ month?: string }>();
   const data = useQuery<any>("archive", { clientKey, month });
 
-  // The legacy useQuery hands back `[]` until the first result lands, and an
-  // empty array is truthy — so a plain `if (!data)` sails past the loading
-  // state and then throws on the first property access. Guard on a field the
-  // real response always carries instead.
-  if (!data?.days) return <Shell>{null}</Shell>;
+  if (!data?.days) return <Shell><p role="status">Loading archive...</p></Shell>;
 
   const pct = data.totals.played ? Math.round((data.totals.solved / data.totals.played) * 100) : 0;
 
@@ -1265,16 +1260,50 @@ function Archive() {
 }
 
 export function App() {
+  const auth = useAuth();
+
+  // Hosted Lakebed requires a protected guest session before app queries.
+  // Keep game hooks unmounted until that session is ready, and expose retries
+  // when session setup fails instead of leaving the loading screen empty.
+  if (auth.isLoading) return <Shell><p role="status">Connecting to the game...</p></Shell>;
+  if (!canAccessApp()) {
+    return (
+      <Shell>
+        <p role="alert">{auth.error ?? "Could not connect to the game."}</p>
+        <RetryButton onRetry={() => void retryAuth()} />
+      </Shell>
+    );
+  }
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Game />} />
-        <Route path="/archive" element={<Archive />} />
-        <Route path="/archive/:month" element={<Archive />} />
-        <Route path="/:puzzle" element={<ArchiveGame />} />
-        <Route path="*" element={<Game />} />
-      </Routes>
-    </Router>
+    <ErrorBoundary fallback={(error, retry) => (
+      <Shell>
+        <p role="alert">Could not load the game. {error.message}</p>
+        <RetryButton onRetry={() => void retryAuth().then(retry)} />
+      </Shell>
+    )}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Game />} />
+          <Route path="/archive" element={<Archive />} />
+          <Route path="/archive/:month" element={<Archive />} />
+          <Route path="/:puzzle" element={<ArchiveGame />} />
+          <Route path="*" element={<Game />} />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
+  );
+}
+
+function RetryButton({ onRetry }: { onRetry: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onRetry}
+      style={{ color: INK, background: "none", border: "none", font: "inherit", padding: 0, cursor: "pointer", textDecoration: "underline" }}
+    >
+      Retry
+    </button>
   );
 }
 
